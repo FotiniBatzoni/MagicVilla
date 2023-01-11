@@ -10,7 +10,7 @@ namespace MagicVilla_VillaAPI.Controllers
     [ApiController]
     public class VillaAPIController : ControllerBase
     {
-        //to add logger to our API
+        //to add logger to our API with Dependency Injection
         private readonly ILogger<VillaAPIController> _logger;
 
     
