@@ -4,6 +4,7 @@ using MagicVilla_VillaAPI.Models;
 using MagicVilla_VillaAPI.Models.Dto;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace MagicVilla_VillaAPI.Controllers
 {
@@ -28,19 +29,19 @@ namespace MagicVilla_VillaAPI.Controllers
         //}
 
         //to create Custom Logging
-        private readonly ILogging _logger;
+        //private readonly ILogging _logger;
 
-        public VillaAPIController(ILogging logger)
-        {
-            _logger = logger;
-        }
+        //public VillaAPIController(ILogging logger)
+        //{
+        //    _logger = logger;
+        //}
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<VillaDTO>> GetVillas()
         {
             // _logger.LogInformation("Getting all Villas");   //serilog
-            _logger.Log("Getting all Villas","");              //custom Log
+            //_logger.Log("Getting all Villas","");              //custom Log
             return Ok(_db.Villas.ToList());
         }
 
@@ -56,7 +57,7 @@ namespace MagicVilla_VillaAPI.Controllers
             if (id == 0)
             {
                 //_logger.LogError("Get Villa Error with Id " + id);    //serilog
-                _logger.Log("Get Villa Error with Id " + id,"error");   //custom Log
+                //_logger.Log("Get Villa Error with Id " + id,"error");   //custom Log
                 return BadRequest();
             }
             var villa = _db.Villas.FirstOrDefault(u => u.Id == id);
@@ -170,7 +171,9 @@ namespace MagicVilla_VillaAPI.Controllers
             {
                 return BadRequest();
             }
-            var villa = _db.Villas.FirstOrDefault(u => u.Id == id);
+            var villa = _db.Villas.AsNoTracking().FirstOrDefault(u => u.Id == id);
+
+
 
             VillaDTO villaDTO = new()
             {
