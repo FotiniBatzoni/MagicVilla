@@ -3,10 +3,10 @@ using System.Linq.Expressions;
 
 namespace MagicVilla_VillaAPI.Repository.IRepository
 {
-    public interface IVillaRepository
+    public interface IVillaRepository : IRepository<Villa>
     {
         //We use Task because is asynchronous
 
-        Task UpdateAsync(Villa entity);
+        Task<Villa> UpdateAsync(Villa entity);
     }
 }
