@@ -3,6 +3,7 @@ using MagicVilla_VillaAPI.Data;
 using MagicVilla_VillaAPI.Logging;
 using MagicVilla_VillaAPI.Models;
 using MagicVilla_VillaAPI.Models.Dto;
+using MagicVilla_VillaAPI.Repository.IRepository;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,13 +15,22 @@ namespace MagicVilla_VillaAPI.Controllers
     public class VillaAPIController : ControllerBase
     {
         //Add Dependency Injection for ApplicationDbContext
-        private readonly ApplicationDbContext _db;
+        //As long as we dont use Repository pattern
+        //Later we supstitute with Repository pattern
+
+        //private readonly ApplicationDbContext _db;
+
         //Add Dependency Injection for AutoMapper
         private readonly IMapper _mapper;
-        public VillaAPIController(ApplicationDbContext db, IMapper mapper)
+        //Add Dependency Injection for Repository
+        private readonly IVillaRepository _dbVilla;
+
+        public VillaAPIController(IVillaRepository dbVilla, IMapper mapper )
         {
-            _db= db;
-            _mapper=mapper;
+           // _db= db;
+            _dbVilla = dbVilla;
+            _mapper =mapper;
+            
         }
 
         //to add logger to our API with Dependency Injection
@@ -47,7 +57,11 @@ namespace MagicVilla_VillaAPI.Controllers
             // _logger.LogInformation("Getting all Villas");   //serilog
             //_logger.Log("Getting all Villas","");              //custom Log
 
-            IEnumerable<Villa> villaList =await _db.Villas.ToListAsync();
+            //With ApplicationDb
+            //IEnumerable<Villa> villaList =await _db.Villas.ToListAsync();
+
+            //With Repository Pattern
+            IEnumerable<Villa> villaList = await _dbVilla.GetAllAsync();
 
             //automatically makes the map
             return Ok(_mapper.Map<List<VillaDTO>>(villaList));
@@ -68,7 +82,11 @@ namespace MagicVilla_VillaAPI.Controllers
                 //_logger.Log("Get Villa Error with Id " + id,"error");   //custom Log
                 return BadRequest();
             }
-            var villa =await  _db.Villas.FirstOrDefaultAsync(u => u.Id == id);
+            //With ApplicationDb
+            //var villa =await  _db.Villas.FirstOrDefaultAsync(u => u.Id == id);
+
+            //With Repository Pattern
+            var villa = await _dbVilla.GetAsync(u => u.Id == id);
             if (villa == null)
             {
                 return NotFound();
@@ -89,7 +107,12 @@ namespace MagicVilla_VillaAPI.Controllers
             //}
 
             //The name of Villa should be unique
-            var villa = await _db.Villas.FirstOrDefaultAsync(u => u.Name.ToLower() == createDTO.Name.ToLower());
+            //With ApplicationDb
+            //var villa = await _db.Villas.FirstOrDefaultAsync(u => u.Name.ToLower() == createDTO.Name.ToLower());
+
+            //With repository Pattern
+            var villa = await _dbVilla.GetAsync(u => u.Name.ToLower() == createDTO.Name.ToLower());
+
             if ( villa != null)
             {
                 ModelState.AddModelError("CustomError", "Villa already exists");
@@ -117,8 +140,14 @@ namespace MagicVilla_VillaAPI.Controllers
             //    Rate = createDTO.Rate,
             //    Sqft = createDTO.Sqft,
             //};
-           await _db.Villas.AddAsync(model);
-           await _db.SaveChangesAsync();
+
+            //With ApplicationDb
+           //await _db.Villas.AddAsync(model);
+           //await _db.SaveChangesAsync();
+
+            //With Repository Pattern
+            _dbVilla.CreateAsync(model);
+
 
             return CreatedAtRoute("GetVilla", new { id = model.Id }, model);
         }
@@ -129,17 +158,31 @@ namespace MagicVilla_VillaAPI.Controllers
         [HttpDelete("{id:int}", Name = "DeleteVilla")]
         public async Task<IActionResult> DeleteVilla(int id)
         {
+            //With ApplicationDb
+            //if (id == 0)
+            //{
+            //    return BadRequest();
+            //}
+            //var villa =await _db.Villas.FirstOrDefaultAsync(u => u.Id == id);
+            //if (villa == null)
+            //{
+            //    return NotFound();
+            //}
+            //_db.Villas.Remove(villa);
+            //await _db.SaveChangesAsync();
+            //return NoContent();
+
+            //With Repository Pattern
             if (id == 0)
             {
                 return BadRequest();
             }
-            var villa =await _db.Villas.FirstOrDefaultAsync(u => u.Id == id);
+            var villa = await _dbVilla.GetAsync(u => u.Id == id);
             if (villa == null)
             {
                 return NotFound();
             }
-            _db.Villas.Remove(villa);
-            await _db.SaveChangesAsync();
+            _dbVilla.RemoveAsync(villa);
             return NoContent();
         }
 
@@ -172,8 +215,13 @@ namespace MagicVilla_VillaAPI.Controllers
             //    Sqft = updateDTO.Sqft,
             //};
 
-            _db.Villas.Update(model);
-            await _db.SaveChangesAsync();
+            //With ApplicationDb
+            //_db.Villas.Update(model);
+            //await _db.SaveChangesAsync();
+            //return NoContent();
+
+            //With Repository Pattern
+            await _dbVilla.UpdateAsync(model);
             return NoContent();
         }
 
@@ -187,7 +235,12 @@ namespace MagicVilla_VillaAPI.Controllers
             {
                 return BadRequest();
             }
-            var villa =await  _db.Villas.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+            //With ApplicationDb
+            //var villa =await  _db.Villas.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+
+            //With Repository Pattern
+            var villa = await _dbVilla.GetAsync(u => u.Id == id, tracked: false);
+
 
             VillaUpdateDTO villaDTO = _mapper.Map<VillaUpdateDTO>(villa);
 
@@ -222,8 +275,12 @@ namespace MagicVilla_VillaAPI.Controllers
             //    Sqft = villaDTO.Sqft,
             //};
 
-            _db.Villas.Update(model);
-            await _db.SaveChangesAsync();
+            //With AppicationDb
+            //_db.Villas.Update(model);
+            //await _db.SaveChangesAsync();
+
+            //With Repository pattern
+            await _dbVilla.UpdateAsync(model);
 
             if (!ModelState.IsValid)
             {
